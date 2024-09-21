@@ -16,7 +16,7 @@ const LobbyPage: React.FC = () => {
   useEffect(() => {
     const fetchCodeBlocks = async () => {
       try {
-        const response = await axios.get<CodeBlock[]>('http://localhost:3000/codeblocks'); 
+        const response = await axios.get<CodeBlock[]>('https://moveo-task-seven.vercel.app//codeblocks'); 
         console.log("Response data:", response.data);
         setCodeBlocks(response.data);
         console.log("CodeBlocks!!!!:", codeBlocks);
