@@ -56,7 +56,7 @@ interface CodeBlockListProps {
   codeBlocks: CodeBlock[];
 }
 
-const CodeBlockList: React.FC<CodeBlockListProps> = ({ codeBlocks }) => {
+export const CodeBlockList: React.FC<CodeBlockListProps> = ({ codeBlocks }) => {
   const navigate = useNavigate();
   const customColors = ['#F19CBB', '#1AC69C', '#3FA4FF', '#C478FF'];
 
@@ -85,4 +85,4 @@ const CodeBlockList: React.FC<CodeBlockListProps> = ({ codeBlocks }) => {
   );
 };
 
-export default CodeBlockList;
+

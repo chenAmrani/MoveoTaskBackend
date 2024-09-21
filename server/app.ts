@@ -20,6 +20,10 @@ const initApp = (): Promise<Express> => {
       app.use(bodyParser.urlencoded({ extended: true }));
       // Routes setup
       app.use("/codeblocks", codeBlockRoutes);
+      app.use(express.static('dist/client'))
+      app.get('*',function (req, res) {
+        res.sendfile('dist/client/index.html');
+      });
       resolve(app);
     });
   });

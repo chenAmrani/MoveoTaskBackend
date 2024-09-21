@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import CodeEditor from '../components/codeBlockEditor';
+import CodeEditor from '../components/codeBlockEditor.tsx';
 import { initSocketConnection } from '../utilities/api-client';
 import { Container, Row, Col } from 'react-bootstrap';
 // import '../styles/CodeBlockPage.css';

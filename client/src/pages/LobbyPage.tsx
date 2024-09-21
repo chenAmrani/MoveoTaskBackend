@@ -4,7 +4,7 @@ import axios from 'axios';
 
 import { Container } from 'react-bootstrap';
 // import CodeBlockEditor from '../components/codeBlockEditor';
-import CodeBlockList from "../components/codeBlockList"
+import {CodeBlockList} from "../../src/components/codeBlockList.tsx";
 // import "../styles/lobbyPage.css";
 import "../styles/LobbyPage.css";
 
