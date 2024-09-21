@@ -22,11 +22,6 @@ const initApp = () => {
             app.use((0, cors_1.default)({ origin: '*' }));
             app.use(body_parser_1.default.json());
             app.use(body_parser_1.default.urlencoded({ extended: true }));
-            app.use((req, res, next) => {
-                res.header('Access-Control-Allow-Origin', 'http://localhost:5173'); // Or '*'
-                res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
-                next();
-            });
             // Routes setup
             app.use("/codeblocks", codeBlock_Route_1.default);
             resolve(app);
