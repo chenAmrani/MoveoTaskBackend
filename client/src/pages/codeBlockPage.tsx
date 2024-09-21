@@ -18,7 +18,7 @@ const CodeBlockPage: React.FC = () => {
   useEffect(() => {
     const fetchCodeBlock = async () => {
       try {
-        const response = await axios.get<CodeBlock>(`https://moveo-task-seven.vercel.app//${id}`);
+        const response = await axios.get<CodeBlock>(`https://moveo-task-seven.vercel.app/${id}`);
         console.log('Fetched code block:', response.data);
         setCodeBlockTitle(response.data.blockTitle);
         setCode(response.data.blockCode);
