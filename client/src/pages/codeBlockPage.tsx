@@ -1,69 +1,95 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import CodeEditor from '../components/codeBlockEditor.tsx';
 import { initSocketConnection } from '../utilities/api-client';
 import { Container, Row, Col } from 'react-bootstrap';
-// import '../styles/CodeBlockPage.css';
+import '../styles/codeBlockPage.css';
 import axios from 'axios';
-import { CodeBlock } from '../pages/LobbyPage'
+import { CodeBlock } from '../pages/LobbyPage';
 
 const CodeBlockPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [role, setRole] = useState<'mentor' | 'student'>('student');
   const [code, setCode] = useState('');
   const [codeBlockTitle, setCodeBlockTitle] = useState<string>('');
   const [socket, setSocket] = useState<ReturnType<typeof initSocketConnection> | null>(null);
 
-
   useEffect(() => {
     const fetchCodeBlock = async () => {
       try {
-        const response = await axios.get<CodeBlock>(`https://moveo-task-bice.vercel.app/codeblocks/${id}`);
-        setCodeBlockTitle(response.data.title);
-        setCode(response.data.code);
+        const response = await axios.get<CodeBlock>(`http://localhost:3000/codeblocks/${id}`);
+        console.log('Fetched code block:', response.data);
+        setCodeBlockTitle(response.data.blockTitle);
+        setCode(response.data.blockCode);
       } catch (error) {
         console.error('Error fetching code block:', error);
       }
     };
     fetchCodeBlock();
+  }, [id]);
 
+  useEffect(() => {
     const socket = initSocketConnection();
-    
     setSocket(socket);
 
-    socket.emit('joinCodeBlock', id); 
+    // Join the code block
+    socket.emit('joinCodeBlock', id);
+    console.log(`Joined code block: ${id}`);
 
+    // Listen for role assignment
     socket.on('roleAssignment', ({ role }) => {
+      console.log(`Role assigned: ${role}`);
       setRole(role);
     });
 
-    socket.on('codeUpdate', (newCode: string) => {
+    // Listen for code updates
+    socket.on('codeChange', (newCode: string) => {
+      console.log('Code updated:', newCode);
       setCode(newCode);
     });
 
+    // Handle mentor leaving the session
+    socket.on('mentorLeft', () => {
+      console.log('Mentor left event received');
+      console.log('Current role:', role);
+      if (role === 'student') {
+        console.log('Student is resetting code and navigating to LobbyPage');
+        socket.emit('resetCode', { codeBlockId: id });
+        setTimeout(() => {
+          navigate('/LobbyPage');
+        }, 100); // slight delay to ensure socket and role state updates
+      }
+    });
+    
+    // Clean up on unmount
     return () => {
+      if (role === 'mentor') {
+        console.log('Mentor is leaving, emitting mentorLeaving event');
+        socket.emit('mentorLeft', { codeBlockId: id });
+      }
+      console.log('Disconnecting socket');
       socket.disconnect();
     };
-  }, [id]);
+  }, [id, role, navigate]);
 
   const handleCodeChange = (newCode: string) => {
     setCode(newCode);
     if (role === 'student') {
+      console.log('Student is emitting code change');
       socket?.emit('codeChange', { codeBlockId: id, newCode });
     }
   };
 
   return (
- <Container fluid className="code-block-container">
-
-        <div className="code-block-title">
-          <h1>{codeBlockTitle}</h1>
-        </div>
-
-      <Row >
+    <Container fluid className="code-block-container">
+      <div className="code-block-title">
+        <h1>{codeBlockTitle}</h1>
+      </div>
+      <Row>
         <Col md={3}>
           <div className="role-permissions">
-            <h3>Role: {role}</h3>
+            <h1>Role: {role}</h1>
             <p>Permissions: {role === 'mentor' ? 'View Only' : 'Edit'}</p>
           </div>
         </Col>

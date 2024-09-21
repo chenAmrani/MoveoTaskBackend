@@ -1,12 +1,15 @@
 
 
-.card {
-    transition: transform 0.2s, box-shadow 0.2s;
+
+  .lobbyPage{
+    background-color: rgb(28, 26, 26);
+    min-height: 100vh;
+  }
+
+  .mb-5{
+    color: rgb(4, 0, 255);
   }
   
-  .card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-  }
+
   
 

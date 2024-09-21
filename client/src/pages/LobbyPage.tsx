@@ -1,28 +1,25 @@
 import React, { useEffect, useState } from 'react';
-
 import axios from 'axios'; 
-
 import { Container } from 'react-bootstrap';
-// import CodeBlockEditor from '../components/codeBlockEditor';
-import {CodeBlockList} from "../../src/components/codeBlockList.tsx";
-// import "../styles/lobbyPage.css";
+import CodeBlockList from "../../src/components/codeBlockList.tsx";
 import "../styles/LobbyPage.css";
 
 export interface CodeBlock {
   _id: string;
-  title: string;
-  code:string;
+  blockTitle: string;
+  blockCode: string;
 }
 
 const LobbyPage: React.FC = () => {
-
   const [codeBlocks, setCodeBlocks] = useState<CodeBlock[]>([]);
 
   useEffect(() => {
     const fetchCodeBlocks = async () => {
       try {
-        const response = await axios.get<CodeBlock[]>('https://moveo-task-bice.vercel.app/codeblocks'); 
+        const response = await axios.get<CodeBlock[]>('http://localhost:3000/codeblocks'); 
+        console.log("Response data:", response.data);
         setCodeBlocks(response.data);
+        console.log("CodeBlocks!!!!:", codeBlocks);
       } catch (error) {
         console.error('Error fetching code blocks:', error);
       }
@@ -31,14 +28,17 @@ const LobbyPage: React.FC = () => {
     fetchCodeBlocks();
   }, []);
 
-
+  // Optional: Log updated codeBlocks when they change
+  useEffect(() => {
+    console.log("Updated codeBlocks:", codeBlocks);
+  }, [codeBlocks]);
 
   return (
     <Container fluid className="lobbyPage">
       <div>
         <div className="text-center mb-5">
-          <h1 className="mb-5">Welcome Tom code web</h1>
-          <h2 className="mb-4">please choose one Code Block</h2>
+          <h1 className="mb-5">Welcome to Code Web</h1>
+          <h2 className="mb-4">Please choose one Code Block</h2>
         </div> 
         <CodeBlockList codeBlocks={codeBlocks} />
       </div>
