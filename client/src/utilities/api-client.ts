@@ -3,6 +3,6 @@ import { io, Socket } from 'socket.io-client';
 let socket: Socket;
 
 export const initSocketConnection = () => {
-  socket = io('https://moveo-task-pink.vercel.app'); 
+  socket = io('https://moveo-task-bice.vercel.app'); 
   return socket;
 };
