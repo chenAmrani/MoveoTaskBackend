@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios'; 
 import { Container } from 'react-bootstrap';
-import CodeBlockList from "../../src/components/codeBlockList.tsx";
+import CodeBlockList from "../../src/components/codeBlockList";
 import "../styles/LobbyPage.css";
 
 export interface CodeBlock {
