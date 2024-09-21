@@ -21,7 +21,7 @@ const LobbyPage: React.FC = () => {
   useEffect(() => {
     const fetchCodeBlocks = async () => {
       try {
-        const response = await axios.get<CodeBlock[]>('https://live-code-tom.netlify.app/codeblocks'); 
+        const response = await axios.get<CodeBlock[]>('https://moveo-task-33v4.vercel.app/codeblocks'); 
         setCodeBlocks(response.data);
       } catch (error) {
         console.error('Error fetching code blocks:', error);
