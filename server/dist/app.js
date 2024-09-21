@@ -24,6 +24,10 @@ const initApp = () => {
             app.use(body_parser_1.default.urlencoded({ extended: true }));
             // Routes setup
             app.use("/codeblocks", codeBlock_Route_1.default);
+            app.use(express_1.default.static('dist/client'));
+            app.get('*', function (req, res) {
+                res.sendfile('dist/client/index.html');
+            });
             resolve(app);
         });
     });
