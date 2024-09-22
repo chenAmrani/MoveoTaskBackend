@@ -1,7 +1,8 @@
+
+
 import React from 'react';
 import Highlight from 'react-highlight';
 import '../styles/codeBlockEditor.css';
-
 interface CodeEditorProps {
   code: string; 
   onChange: (code: string) => void; 

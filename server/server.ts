@@ -1,7 +1,7 @@
 import initApp from "./app";
 import http from "http";
 import { Server } from "socket.io";
-import CodeBlock from "./models/codeBlock"
+import CodeBlock from "./models/codeBlock";
 
 // Initialize the application
 const startServer = async () => {
@@ -14,15 +14,15 @@ const startServer = async () => {
     // Initialize Socket.IO with CORS options
     const io = new Server(server, {
       cors: {
-        origin: "*", 
+        origin: "*",
         methods: ["GET", "POST"],
         allowedHeaders: ["Content-Type"],
         credentials: true
       }
     });
 
-    const codeBlockRooms = new Map<string, string[]>(); 
-    // Example structure: { block1: ['user123', 'user456'] }
+    const codeBlockRooms = new Map<string, { mentor: string | null, students: string[] }>(); 
+    // Example structure: { block1: { mentor: 'user123', students: ['user456', 'user789'] } }
 
     // Socket.IO connection handler
     io.on("connection", (socket) => {
@@ -31,15 +31,26 @@ const startServer = async () => {
       // Join a code block room
       socket.on("joinCodeBlock", (codeBlockId: string) => {
         if (!codeBlockRooms.has(codeBlockId)) {
-          codeBlockRooms.set(codeBlockId, []);
+          codeBlockRooms.set(codeBlockId, { mentor: null, students: [] });
         }
 
-        const codeBlockMembers = codeBlockRooms.get(codeBlockId);
-        const role = codeBlockMembers?.length === 0 ? "mentor" : "student";
+        const room = codeBlockRooms.get(codeBlockId);
 
-        codeBlockMembers?.push(socket.id);
+        // Assign role based on the current state of the room
+        let role;
+        if (!room?.mentor) {
+          role = "mentor";
+          room!.mentor = socket.id; 
+        } else {
+          role = "student";
+          room!.students.push(socket.id); 
+        }
+
         socket.join(codeBlockId);
         socket.emit("roleAssignment", { role });
+
+        // Broadcast the updated number of students in the room
+        io.in(codeBlockId).emit("studentCount", { studentCount: room?.students.length || 0 });
         console.log(`User ${socket.id} joined code block room: ${codeBlockId} as ${role}`);
       });
 
@@ -55,19 +66,30 @@ const startServer = async () => {
         }
       });
 
-      // Handle user disconnection
+     
       socket.on("disconnect", () => {
         console.log("User disconnected:", socket.id);
-        for (const [room, members] of codeBlockRooms.entries()) {
-          if (members.includes(socket.id)) {
-            const filteredMembers = members.filter((member) => member !== socket.id);
-            codeBlockRooms.set(room, filteredMembers);
-            console.log(`User ${socket.id} removed from room: ${room}`);
 
-            // If no members are left in the room, delete the room
-            if (filteredMembers.length === 0) {
-              codeBlockRooms.delete(room);
-            }
+        for (const [roomId, room] of codeBlockRooms.entries()) {
+          if (room.mentor === socket.id) {
+            console.log(`Mentor ${socket.id} left the room: ${roomId}`);
+            room.mentor = null;
+            io.in(roomId).emit("mentorLeft"); 
+            room.students.forEach((studentId) => {
+              io.sockets.sockets.get(studentId)?.leave(roomId); 
+            });
+            room.students = []; 
+          } else if (room.students.includes(socket.id)) {
+          
+            room.students = room.students.filter((studentId) => studentId !== socket.id);
+            io.in(roomId).emit("studentCount", { studentCount: room.students.length }); 
+            console.log(`Student ${socket.id} left the room: ${roomId}`);
+          }
+
+
+          if (!room.mentor && room.students.length === 0) {
+            codeBlockRooms.delete(roomId);
+            console.log(`Room ${roomId} has been deleted`);
           }
         }
       });
