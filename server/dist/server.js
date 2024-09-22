@@ -28,21 +28,22 @@ const startServer = () => __awaiter(void 0, void 0, void 0, function* () {
                 origin: "*",
                 methods: ["GET", "POST"],
                 allowedHeaders: ["Content-Type"],
-                credentials: true
-            }
+                credentials: true,
+            },
         });
         const codeBlockRooms = new Map();
-        // Example structure: { block1: { mentor: 'user123', students: ['user456', 'user789'] } }
         // Socket.IO connection handler
         io.on("connection", (socket) => {
             console.log("User connected:", socket.id);
             // Join a code block room
-            socket.on("joinCodeBlock", (codeBlockId) => {
+            socket.on("joinCodeBlock", (codeBlockId) => __awaiter(void 0, void 0, void 0, function* () {
                 if (!codeBlockRooms.has(codeBlockId)) {
                     codeBlockRooms.set(codeBlockId, { mentor: null, students: [] });
                 }
                 const room = codeBlockRooms.get(codeBlockId);
-                // Assign role based on the current state of the room
+                const codeBlock = yield codeBlock_1.default.findById(codeBlockId); // Get the code block details
+                const solution = codeBlock === null || codeBlock === void 0 ? void 0 : codeBlock.correctSolution; // Assuming the correct solution is stored here
+                // Assign role based on room state
                 let role;
                 if (!(room === null || room === void 0 ? void 0 : room.mentor)) {
                     role = "mentor";
@@ -54,47 +55,49 @@ const startServer = () => __awaiter(void 0, void 0, void 0, function* () {
                 }
                 socket.join(codeBlockId);
                 socket.emit("roleAssignment", { role });
-                // Broadcast the updated number of students in the room
                 io.in(codeBlockId).emit("studentCount", { studentCount: (room === null || room === void 0 ? void 0 : room.students.length) || 0 });
-                console.log(`User ${socket.id} joined code block room: ${codeBlockId} as ${role}`);
-            });
-            socket.on('codeChange', (_a) => __awaiter(void 0, [_a], void 0, function* ({ codeBlockId, newCode }) {
-                try {
-                    yield codeBlock_1.default.findByIdAndUpdate(codeBlockId, { code: newCode });
-                    socket.to(codeBlockId).emit('codeUpdate', newCode);
-                    console.log(`Broadcasting code change for code block: ${codeBlockId}`);
-                }
-                catch (err) {
-                    console.error(`Error updating code block ${codeBlockId}:`, err);
-                    socket.emit('error', 'Failed to update code block');
-                }
-            }));
-            socket.on("disconnect", () => {
-                console.log("User disconnected:", socket.id);
-                for (const [roomId, room] of codeBlockRooms.entries()) {
-                    if (room.mentor === socket.id) {
-                        console.log(`Mentor ${socket.id} left the room: ${roomId}`);
+                // Handle code changes from students
+                socket.on("codeChange", (_a) => __awaiter(void 0, [_a], void 0, function* ({ codeBlockId, newCode }) {
+                    try {
+                        yield codeBlock_1.default.findByIdAndUpdate(codeBlockId, { code: newCode });
+                        // Broadcast the new code to all clients except the sender
+                        socket.to(codeBlockId).emit("codeChange", newCode);
+                        // Check if the new code matches the solution
+                        if (newCode === solution) {
+                            // If the code matches the solution, emit the 'showSmiley' event
+                            io.in(codeBlockId).emit("showSmiley");
+                            console.log(`Solution matched for code block ${codeBlockId}, showing smiley.`);
+                        }
+                    }
+                    catch (err) {
+                        console.error(`Error updating code block ${codeBlockId}:`, err);
+                        socket.emit("error", "Failed to update code block");
+                    }
+                }));
+                // Handle mentor leaving the session
+                socket.on("mentorLeft", ({ codeBlockId }) => {
+                    if ((room === null || room === void 0 ? void 0 : room.mentor) === socket.id) {
                         room.mentor = null;
-                        io.in(roomId).emit("mentorLeft");
-                        room.students.forEach((studentId) => {
-                            var _a;
-                            (_a = io.sockets.sockets.get(studentId)) === null || _a === void 0 ? void 0 : _a.leave(roomId);
-                        });
-                        room.students = [];
+                        io.in(codeBlockId).emit("mentorLeft"); // Notify students to leave
+                        room.students = []; // Clear the students list
                     }
-                    else if (room.students.includes(socket.id)) {
-                        room.students = room.students.filter((studentId) => studentId !== socket.id);
-                        io.in(roomId).emit("studentCount", { studentCount: room.students.length });
-                        console.log(`Student ${socket.id} left the room: ${roomId}`);
+                });
+                // Handle user disconnecting
+                socket.on("disconnect", () => {
+                    console.log("User disconnected:", socket.id);
+                    for (const [roomId, room] of codeBlockRooms.entries()) {
+                        if (room.mentor === socket.id) {
+                            io.in(roomId).emit("mentorLeft");
+                            codeBlockRooms.delete(roomId);
+                        }
+                        else if (room.students.includes(socket.id)) {
+                            room.students = room.students.filter((studentId) => studentId !== socket.id);
+                            io.in(roomId).emit("studentCount", { studentCount: room.students.length });
+                        }
                     }
-                    if (!room.mentor && room.students.length === 0) {
-                        codeBlockRooms.delete(roomId);
-                        console.log(`Room ${roomId} has been deleted`);
-                    }
-                }
-            });
+                });
+            }));
         });
-        // Start the server
         const port = process.env.PORT || 3000;
         server.listen(port, () => {
             console.log(`Server running on http://localhost:${port}`);
