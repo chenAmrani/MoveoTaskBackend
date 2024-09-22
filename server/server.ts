@@ -31,6 +31,7 @@ const startServer = async () => {
       // Join a code block room
       socket.on("joinCodeBlock", (codeBlockId: string) => {
         if (!codeBlockRooms.has(codeBlockId)) {
+
           codeBlockRooms.set(codeBlockId, { mentor: null, students: [] });
         }
 
@@ -54,15 +55,14 @@ const startServer = async () => {
         console.log(`User ${socket.id} joined code block room: ${codeBlockId} as ${role}`);
       });
 
-      // Handle code changes
-      socket.on("codeChange", async ({ codeBlockId, newCode }: { codeBlockId: string; newCode: string }) => {
-        try {
+      socket.on('codeChange', async({ codeBlockId, newCode }) => {
+        try{
           await CodeBlock.findByIdAndUpdate(codeBlockId, { code: newCode });
-          socket.to(codeBlockId).emit("codeUpdate", newCode);
+          socket.to(codeBlockId).emit('codeUpdate', newCode);
           console.log(`Broadcasting code change for code block: ${codeBlockId}`);
-        } catch (err) {
+        }catch(err){
           console.error(`Error updating code block ${codeBlockId}:`, err);
-          socket.emit("error", "Failed to update code block");
+          socket.emit('error', 'Failed to update code block');
         }
       });
 
