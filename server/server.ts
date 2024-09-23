@@ -4,22 +4,16 @@ import { Server } from "socket.io";
 import CodeBlock from "./models/codeBlock";
 
 
-const startServer = async () => {
-  try {
-    const app = await initApp();
-
-   
-    const server = http.createServer(app);
-
-   
-    const io = new Server(server, {
-      cors: {
-        origin: "*",
-        methods: ['GET', 'POST', 'PUT', 'DELETE'],
-        allowedHeaders: ['Content-Type', 'Authorization'],
-        credentials: true,
-      },
-    });
+initApp().then((app) => {
+  const server = http.createServer(app);
+  const io = new Server(server, {
+    cors: {
+      origin: "*", 
+      methods: ["GET", "POST"],
+      allowedHeaders: ["Content-Type"], 
+      credentials: true 
+    }
+  });
 
     const codeBlockRooms = new Map<string, { mentor: string | null; students: string[] }>();
 
@@ -97,12 +91,9 @@ const startServer = async () => {
     server.listen(port, () => {
       console.log(`Server running on http://localhost:${port}`);
     });
-  } catch (error) {
-    console.error("Error starting the server:", error);
-  }
-};
+ 
+});
 
 
 
 
-startServer();
