@@ -5,7 +5,7 @@ let socket: Socket;
 export const initSocketConnection = () => {
   // socket = io('https://moveo-task-bice.vercel.app'); 
   // socket = io('https://moveo-task-seven.vercel.app'); 
-     socket = io(`https://moveo-task-lbk3.vercel.app`); 
+     socket = io(`https://moveo-task-gamma.vercel.app`); 
 
   return socket;
 };
