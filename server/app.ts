@@ -20,9 +20,13 @@ const initApp = (): Promise<Express> => {
       app.use(bodyParser.urlencoded({ extended: true }));
       // Routes setup
       app.use("/codeblocks", codeBlockRoutes);
-      app.use(express.static('dist/client'))
+      app.use(cors({ origin: '*' }));
+      app.use(bodyParser.json());
+      app.use(bodyParser.urlencoded({ extended: true }));
       app.get('*',function (req, res) {
-        res.sendfile('dist/client/index.html');
+        app.get('/codeblocks', (req, res) => {
+          res.json({ message: 'Code blocks fetched successfully' });
+        });
       });
       resolve(app);
     });
