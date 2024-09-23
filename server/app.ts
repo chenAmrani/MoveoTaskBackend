@@ -6,6 +6,9 @@ import mongoose from "mongoose";
 import bodyParser from "body-parser";
 import codeBlockRoutes from './routes/codeBlock_Route';
 
+require('dotenv').config(); 
+
+
 const initApp = (): Promise<Express> => {
   const promise = new Promise<Express>((resolve) => {
     const db = mongoose.connection;
