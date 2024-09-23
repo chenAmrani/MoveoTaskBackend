@@ -16,13 +16,10 @@ const app_1 = __importDefault(require("./app"));
 const http_1 = __importDefault(require("http"));
 const socket_io_1 = require("socket.io");
 const codeBlock_1 = __importDefault(require("./models/codeBlock"));
-// Initialize the application
 const startServer = () => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const app = yield (0, app_1.default)();
-        // Create the HTTP server
         const server = http_1.default.createServer(app);
-        // Initialize Socket.IO with CORS options
         const io = new socket_io_1.Server(server, {
             cors: {
                 origin: "*",
@@ -32,18 +29,15 @@ const startServer = () => __awaiter(void 0, void 0, void 0, function* () {
             },
         });
         const codeBlockRooms = new Map();
-        // Socket.IO connection handler
         io.on("connection", (socket) => {
             console.log("User connected:", socket.id);
-            // Join a code block room
             socket.on("joinCodeBlock", (codeBlockId) => __awaiter(void 0, void 0, void 0, function* () {
                 if (!codeBlockRooms.has(codeBlockId)) {
                     codeBlockRooms.set(codeBlockId, { mentor: null, students: [] });
                 }
                 const room = codeBlockRooms.get(codeBlockId);
-                const codeBlock = yield codeBlock_1.default.findById(codeBlockId); // Get the code block details
-                const solution = codeBlock === null || codeBlock === void 0 ? void 0 : codeBlock.correctSolution; // Assuming the correct solution is stored here
-                // Assign role based on room state
+                const codeBlock = yield codeBlock_1.default.findById(codeBlockId);
+                const solution = codeBlock === null || codeBlock === void 0 ? void 0 : codeBlock.correctSolution;
                 let role;
                 if (!(room === null || room === void 0 ? void 0 : room.mentor)) {
                     role = "mentor";
@@ -56,15 +50,11 @@ const startServer = () => __awaiter(void 0, void 0, void 0, function* () {
                 socket.join(codeBlockId);
                 socket.emit("roleAssignment", { role });
                 io.in(codeBlockId).emit("studentCount", { studentCount: (room === null || room === void 0 ? void 0 : room.students.length) || 0 });
-                // Handle code changes from students
                 socket.on("codeChange", (_a) => __awaiter(void 0, [_a], void 0, function* ({ codeBlockId, newCode }) {
                     try {
                         yield codeBlock_1.default.findByIdAndUpdate(codeBlockId, { code: newCode });
-                        // Broadcast the new code to all clients except the sender
                         socket.to(codeBlockId).emit("codeChange", newCode);
-                        // Check if the new code matches the solution
                         if (newCode === solution) {
-                            // If the code matches the solution, emit the 'showSmiley' event
                             io.in(codeBlockId).emit("showSmiley");
                             console.log(`Solution matched for code block ${codeBlockId}, showing smiley.`);
                         }
@@ -74,15 +64,13 @@ const startServer = () => __awaiter(void 0, void 0, void 0, function* () {
                         socket.emit("error", "Failed to update code block");
                     }
                 }));
-                // Handle mentor leaving the session
                 socket.on("mentorLeft", ({ codeBlockId }) => {
                     if ((room === null || room === void 0 ? void 0 : room.mentor) === socket.id) {
                         room.mentor = null;
-                        io.in(codeBlockId).emit("mentorLeft"); // Notify students to leave
-                        room.students = []; // Clear the students list
+                        io.in(codeBlockId).emit("mentorLeft");
+                        room.students = [];
                     }
                 });
-                // Handle user disconnecting
                 socket.on("disconnect", () => {
                     console.log("User disconnected:", socket.id);
                     for (const [roomId, room] of codeBlockRooms.entries()) {
@@ -107,5 +95,4 @@ const startServer = () => __awaiter(void 0, void 0, void 0, function* () {
         console.error("Error starting the server:", error);
     }
 });
-// Run the server
 startServer();
