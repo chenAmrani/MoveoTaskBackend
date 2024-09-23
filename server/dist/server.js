@@ -22,7 +22,7 @@ const startServer = () => __awaiter(void 0, void 0, void 0, function* () {
         const server = http_1.default.createServer(app);
         const io = new socket_io_1.Server(server, {
             cors: {
-                origin: "*",
+                origin: 'https://moveo-task-client-omega.vercel.app',
                 methods: ["GET", "POST"],
                 allowedHeaders: ["Content-Type"],
                 credentials: true,
