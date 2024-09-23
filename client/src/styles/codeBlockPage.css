@@ -1,7 +1,7 @@
 .code-block-container {
 
     min-height: 100vh;
-    background-color: #000000;
+    background-color: #2d2d2d;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
@@ -14,6 +14,12 @@
     text-align: center;
     margin-top: 20px;
     margin-bottom: 20px;
+  }
+
+  .code-editor{
+    background-color: #2d2d2d;
+    border: none;
+
   }
 
   .code-editor-wrapper {

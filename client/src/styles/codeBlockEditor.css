@@ -1,16 +1,19 @@
 /* CodeEditor.css */
 .code-editor {
-    border: 1px solid #ddd;
     padding: 10px;
-    background-color: #ffffff;
+    background-color: #2d2d2d;
+    width: 100%;
+    align-items: center;
   }
   
   .code-editor-textarea {
+    align-items: center;
     width: 100%;
-    height: 300px;
+    height: 500px;
     font-family: monospace;
     border: none;
-    background: #ffffff;
+    background: #010101;
+    color: white;
   }
   
 

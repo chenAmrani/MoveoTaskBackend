@@ -1,13 +1,18 @@
-
+.container{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+ 
+  }
 
 
   .lobbyPage{
-    background-color: rgb(28, 26, 26);
+    background-color: rgba(194, 194, 194, 0.638);
     min-height: 100vh;
   }
 
   .mb-5{
-    color: rgb(4, 0, 255);
+    color: rgb(36, 40, 36);
   }
   
 

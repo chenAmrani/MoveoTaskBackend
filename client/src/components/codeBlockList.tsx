@@ -9,10 +9,10 @@ interface CodeBlockListProps {
 
 const CodeBlockList: React.FC<CodeBlockListProps> = ({ codeBlocks }) => {
   const navigate = useNavigate();
-  const customColors = ['#FFFF', '#FFFF', '#FFFF', '#FFFF'];
+  const customColors = ['#2d2d2d', '#2d2d2d', '#2d2d2d', '#2d2d2d'];
 console.log("codeBlocks",codeBlocks);
   return (
-    <ListGroup className="w-100">
+    <ListGroup className="list">
       {codeBlocks.map((block, index) => {
         const color = customColors[index] || '#ffff'; 
 
@@ -23,9 +23,14 @@ console.log("codeBlocks",codeBlocks);
             onClick={() => navigate(`/codeblock/${block._id}`)}
             style={{
               backgroundColor: color,
-              color: 'red',
+              justifyContent: 'center',
+              width: '100%',
+              alignItems: 'center',
+              color: 'white',
               textAlign: 'center',
-              marginBottom: '10px'
+              marginBottom: '25px',
+              boxShadow: '0 4px 8px 0 rgba(0,0,0,0.8)',
+              borderRadius: '10px',
             }}
           >
             {block.blockTitle}
