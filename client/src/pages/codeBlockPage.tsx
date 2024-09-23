@@ -20,7 +20,7 @@ const CodeBlockPage: React.FC = () => {
   useEffect(() => {
     const fetchCodeBlock = async () => {
       try {
-        const response = await axios.get<CodeBlock>(`https://moveo-task-eight.vercel.app/codeblocks/${id}`);
+        const response = await axios.get<CodeBlock>(`https://moveo-task-six.vercel.app/codeblocks/${id}`);
         setCodeBlockTitle(response.data.blockTitle);
         setCode(response.data.blockCode);
       } catch (error) {
