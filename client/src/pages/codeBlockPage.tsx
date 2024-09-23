@@ -20,7 +20,7 @@ const CodeBlockPage: React.FC = () => {
   useEffect(() => {
     const fetchCodeBlock = async () => {
       try {
-        const response = await axios.get<CodeBlock>(`http://localhost:3000/codeblocks/${id}`);
+        const response = await axios.get<CodeBlock>(`https://moveo-task-seven.vercel.app/codeblocks/${id}`);
         setCodeBlockTitle(response.data.blockTitle);
         setCode(response.data.blockCode);
       } catch (error) {
@@ -34,10 +34,8 @@ const CodeBlockPage: React.FC = () => {
     const socket = initSocketConnection();
     setSocket(socket);
 
-    // Join the code block room
     socket.emit('joinCodeBlock', id);
 
-    // Listen for role assignment from the server
     socket.on('roleAssignment', ({ role }) => {
       setRole(role);
     });
@@ -46,29 +44,24 @@ const CodeBlockPage: React.FC = () => {
       setCode(newCode);
     });
 
-    // Listen for code updates from other users (mentor sees student updates)
     socket.on('codeChange', (newCode: string) => {
       setCode(newCode);
     });
 
-    // Listen for mentor leaving and redirect students
     socket.on('mentorLeft', () => {
       if (role === 'student') {
-        navigate('/'); // Redirect students to the lobby if the mentor leaves
+        navigate('/'); 
       }
     });
 
-    // Listen for student count updates
     socket.on('studentCount', ({ studentCount }) => {
       setStudentCount(studentCount);
     });
 
-    // Listen for smiley event when the student matches the solution
     socket.on('showSmiley', () => {
       setShowSmiley(true);
     });
 
-    // Clean up socket connection on unmount
     return () => {
       if (role === 'mentor') {
         socket.emit('mentorLeft', { codeBlockId: id });
@@ -77,11 +70,9 @@ const CodeBlockPage: React.FC = () => {
     };
   }, [id, role, navigate]);
 
-  // Handle code changes made by the student
   const handleCodeChange = (newCode: string) => {
     setCode(newCode);
     if (role === 'student') {
-      // Emit code change to the server for real-time broadcast to the mentor
       socket?.emit('codeChange', { codeBlockId: id, newCode });
     }
   };
@@ -92,7 +83,7 @@ const CodeBlockPage: React.FC = () => {
         <h1>{codeBlockTitle}</h1>
       </div>
       {showSmiley ? (
-        <div className="smiley-face">😊</div> // Show smiley face if the code matches the solution
+        <div className="smiley-face">😊</div> 
       ) : (
         <Row>
           <Col md={3}>
