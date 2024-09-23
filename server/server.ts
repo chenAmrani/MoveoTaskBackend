@@ -14,7 +14,7 @@ const startServer = async () => {
    
     const io = new Server(server, {
       cors: {
-        origin: "*",
+        origin: 'https://moveo-task-client-omega.vercel.app',
         methods: ["GET", "POST"],
         allowedHeaders: ["Content-Type"],
         credentials: true,
