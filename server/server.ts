@@ -35,6 +35,7 @@ initApp().then((app) => {
         let role;
         if (!room?.mentor) {
           role = "mentor";
+          console.log(`Mentor assigned to code block ${codeBlockId}`);
           room!.mentor = socket.id;
         } else {
           role = "student";
