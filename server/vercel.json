@@ -1,11 +1,10 @@
 {
-  "version": 2,
-  "builds": [
-    { "src": "server.ts", "use": "@vercel/node" }
-  ],
-  "routes": [
-    { "src": "/codeblock/(.*)", "dest": "/dist/server.js" }
-  ]
-}
-
+    "version": 2,
+    "builds": [
+      { "src": "server.ts", "use": "@vercel/node" }
+    ],
+    "routes": [
+      { "src": "/codeblocks", "dest": "/server.ts" }
+    ]
+  }
   
