@@ -1,105 +1,17 @@
-// import initApp from "./app";
-// import http from "http";
-// import { Server } from "socket.io";
-// import CodeBlock from "./models/codeBlock";
-
-
-// initApp().then((app) => {
-//   const server = http.createServer(app);
-//   const io = new Server(server, {
-//     cors: {
-//       origin: "*",
-//       methods: ["GET", "POST"],
-//       allowedHeaders: ["Content-Type"],
-//       credentials: true
-//     }
-//   });
-
-//     const codeBlockRooms = new Map<string, { mentor: string | null; students: string[] }>();
-
-    
-//     io.on("connection", (socket) => {
-//       console.log("User connected:", socket.id);
-
-      
-//       socket.on("joinCodeBlock", async (codeBlockId: string) => {
-//         if (!codeBlockRooms.has(codeBlockId)) {
-//           codeBlockRooms.set(codeBlockId, { mentor: null, students: [] });
-//         }
-
-//         const room = codeBlockRooms.get(codeBlockId);
-//         const codeBlock = await CodeBlock.findById(codeBlockId); 
-//         const solution = codeBlock?.correctSolution; 
-
-      
-//         let role;
-//         if (!room?.mentor) {
-//           role = "mentor";
-//           room!.mentor = socket.id;
-//         } else {
-//           role = "student";
-//           room!.students.push(socket.id);
-//         }
-
-//         socket.join(codeBlockId);
-//         socket.emit("roleAssignment", { role });
-//         io.in(codeBlockId).emit("studentCount", { studentCount: room?.students.length || 0 });
-
-        
-//         socket.on("codeChange", async ({ codeBlockId, newCode }) => {
-//           try {
-//             await CodeBlock.findByIdAndUpdate(codeBlockId, { code: newCode });
-            
-//             socket.to(codeBlockId).emit("codeChange", newCode); 
-
-//             if (newCode === solution) {
-//               io.in(codeBlockId).emit("showSmiley");
-//               console.log(`Solution matched for code block ${codeBlockId}, showing smiley.`);
-//             }
-//           } catch (err) {
-//             console.error(`Error updating code block ${codeBlockId}:`, err);
-//             socket.emit("error", "Failed to update code block");
-//           }
-//         });
-
-     
-//         socket.on("mentorLeft", ({ codeBlockId }) => {
-//           if (room?.mentor === socket.id) {
-//             room.mentor = null;
-//             io.in(codeBlockId).emit("mentorLeft"); 
-//             room.students = []; 
-//           }
-//         });
-
-       
-//         socket.on("disconnect", () => {
-//           console.log("User disconnected:", socket.id);
-//           for (const [roomId, room] of codeBlockRooms.entries()) {
-//             if (room.mentor === socket.id) {
-//               io.in(roomId).emit("mentorLeft");
-//               codeBlockRooms.delete(roomId);
-//             } else if (room.students.includes(socket.id)) {
-//               room.students = room.students.filter((studentId) => studentId !== socket.id);
-//               io.in(roomId).emit("studentCount", { studentCount: room.students.length });
-//             }
-//           }
-//         });
-//       });
-//     });
-
-//     const port = process.env.PORT || 3000;
-//     server.listen(port, () => {
-//       console.log(`Server running on http://localhost:${port}`);
-//     });
- 
-// });
-
 import initApp from "./app";
 import http from "http";
 import { Server } from "socket.io";
-import CodeBlock from "./models/codeBlock";  // Assuming you have a CodeBlock model
+import CodeBlock from "./models/codeBlock";
+import mongoose from "mongoose";
 
-// Initialize the app and HTTP server
+const RoomSchema = new mongoose.Schema({
+  codeBlockId: { type: String, required: true },
+  mentor: { type: String, default: null },
+  students: { type: [String], default: [] }
+});
+
+const Room = mongoose.model("Room", RoomSchema);
+
 initApp().then((app) => {
   const server = http.createServer(app);
   const io = new Server(server, {
@@ -111,52 +23,47 @@ initApp().then((app) => {
     }
   });
 
-  // In-memory map to store mentor and students for each code block room
-  const codeBlockRooms = new Map<string, { mentor: string | null; students: string[] }>();
-
   // Handle socket connection
   io.on("connection", (socket) => {
     console.log("User connected:", socket.id);
 
     // User joins a code block room
     socket.on("joinCodeBlock", async (codeBlockId: string) => {
-      // Initialize a new room if it doesn't exist
-      if (!codeBlockRooms.has(codeBlockId)) {
-        codeBlockRooms.set(codeBlockId, { mentor: null, students: [] });
+      // Find or create a room in the database
+      let room = await Room.findOne({ codeBlockId });
+      if (!room) {
+        room = new Room({ codeBlockId });
+        await room.save();
       }
 
-      const room = codeBlockRooms.get(codeBlockId);
-      const codeBlock = await CodeBlock.findById(codeBlockId);  // Fetch code block from DB
-      const solution = codeBlock?.correctSolution;  // Fetch the solution to compare
+      const codeBlock = await CodeBlock.findById(codeBlockId);
+      const solution = codeBlock?.correctSolution;
 
       let role;
-      if (!room?.mentor) {
+      if (!room.mentor) {
         // First user becomes the mentor
         role = "mentor";
-        room!.mentor = socket.id;
+        room.mentor = socket.id;
       } else {
         // All subsequent users become students
         role = "student";
-        room!.students.push(socket.id);
+        room.students.push(socket.id);
       }
 
-      // Join the room and notify the user of their assigned role
+      await room.save();  // Persist mentor and student data
+
       socket.join(codeBlockId);
       socket.emit("roleAssignment", { role });
 
-      // Emit the updated student count to all users in the room
-      io.in(codeBlockId).emit("studentCount", { studentCount: room?.students.length || 0 });
+      io.in(codeBlockId).emit("studentCount", { studentCount: room.students.length });
 
       // Listen for code changes from students
       socket.on("codeChange", async ({ codeBlockId, newCode }) => {
         try {
-          // Update the code in the database
           await CodeBlock.findByIdAndUpdate(codeBlockId, { code: newCode });
           
-          // Broadcast the code change to everyone except the sender
           socket.to(codeBlockId).emit("codeChange", newCode);
 
-          // If the student's code matches the solution, show the smiley face
           if (newCode === solution) {
             io.in(codeBlockId).emit("showSmiley");
             console.log(`Solution matched for code block ${codeBlockId}, showing smiley.`);
@@ -168,36 +75,33 @@ initApp().then((app) => {
       });
 
       // Handle mentor leaving the room
-      socket.on("mentorLeft", () => {
+      socket.on("mentorLeft", async () => {
         if (room?.mentor === socket.id) {
-          room.mentor = null;
-          room.students = [];  // Clear student list when mentor leaves
+          room.mentor = ' ';
+          room.students = [];
+          await room.save();
           io.in(codeBlockId).emit("mentorLeft");
         }
       });
 
       // Handle user disconnection
-      socket.on("disconnect", () => {
+      socket.on("disconnect", async () => {
         console.log("User disconnected:", socket.id);
 
-        // If the mentor disconnects, remove the room
         if (room?.mentor === socket.id) {
           io.in(codeBlockId).emit("mentorLeft");
-          codeBlockRooms.delete(codeBlockId);  // Delete the room
+          await Room.deleteOne({ codeBlockId });  // Delete room from the database
         } else if (room?.students.includes(socket.id)) {
-          // Remove the disconnected student from the student list
           room.students = room.students.filter((studentId) => studentId !== socket.id);
+          await room.save();
           io.in(codeBlockId).emit("studentCount", { studentCount: room.students.length });
         }
       });
     });
   });
 
-  // Start the server on the specified port
   const port = process.env.PORT || 3000;
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}`);
   });
 });
-
-
