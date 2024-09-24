@@ -4,7 +4,7 @@
       { "src": "server.ts", "use": "@vercel/node" }
     ],
     "routes": [
-      { "src": "/codeblocks", "dest": "/server.ts" }
+      { "src": "/codeblock", "dest": "/server.ts" }
     ]
   }
   
