@@ -97,8 +97,9 @@
 import initApp from "./app";
 import http from "http";
 import { Server } from "socket.io";
-import CodeBlock from "./models/codeBlock";
+import CodeBlock from "./models/codeBlock";  // Assuming you have a CodeBlock model
 
+// Initialize the app and HTTP server
 initApp().then((app) => {
   const server = http.createServer(app);
   const io = new Server(server, {
@@ -113,18 +114,20 @@ initApp().then((app) => {
   // In-memory map to store mentor and students for each code block room
   const codeBlockRooms = new Map<string, { mentor: string | null; students: string[] }>();
 
+  // Handle socket connection
   io.on("connection", (socket) => {
     console.log("User connected:", socket.id);
 
     // User joins a code block room
     socket.on("joinCodeBlock", async (codeBlockId: string) => {
+      // Initialize a new room if it doesn't exist
       if (!codeBlockRooms.has(codeBlockId)) {
         codeBlockRooms.set(codeBlockId, { mentor: null, students: [] });
       }
 
       const room = codeBlockRooms.get(codeBlockId);
-      const codeBlock = await CodeBlock.findById(codeBlockId);
-      const solution = codeBlock?.correctSolution;
+      const codeBlock = await CodeBlock.findById(codeBlockId);  // Fetch code block from DB
+      const solution = codeBlock?.correctSolution;  // Fetch the solution to compare
 
       let role;
       if (!room?.mentor) {
@@ -132,23 +135,30 @@ initApp().then((app) => {
         role = "mentor";
         room!.mentor = socket.id;
       } else {
-        // Subsequent users become students
+        // All subsequent users become students
         role = "student";
         room!.students.push(socket.id);
       }
 
-      socket.join(codeBlockId);  // User joins the room
+      // Join the room and notify the user of their assigned role
+      socket.join(codeBlockId);
       socket.emit("roleAssignment", { role });
+
+      // Emit the updated student count to all users in the room
       io.in(codeBlockId).emit("studentCount", { studentCount: room?.students.length || 0 });
 
-      // Handle code changes by the student
+      // Listen for code changes from students
       socket.on("codeChange", async ({ codeBlockId, newCode }) => {
         try {
+          // Update the code in the database
           await CodeBlock.findByIdAndUpdate(codeBlockId, { code: newCode });
-          socket.to(codeBlockId).emit("codeChange", newCode);  // Notify others about the code change
+          
+          // Broadcast the code change to everyone except the sender
+          socket.to(codeBlockId).emit("codeChange", newCode);
 
+          // If the student's code matches the solution, show the smiley face
           if (newCode === solution) {
-            io.in(codeBlockId).emit("showSmiley");  // Show smiley if code matches the solution
+            io.in(codeBlockId).emit("showSmiley");
             console.log(`Solution matched for code block ${codeBlockId}, showing smiley.`);
           }
         } catch (err) {
@@ -157,24 +167,25 @@ initApp().then((app) => {
         }
       });
 
-      // Handle mentor leaving
+      // Handle mentor leaving the room
       socket.on("mentorLeft", () => {
         if (room?.mentor === socket.id) {
           room.mentor = null;
-          room.students = [];
-          io.in(codeBlockId).emit("mentorLeft");  // Notify students that mentor left
+          room.students = [];  // Clear student list when mentor leaves
+          io.in(codeBlockId).emit("mentorLeft");
         }
       });
 
-      // Handle disconnection
+      // Handle user disconnection
       socket.on("disconnect", () => {
         console.log("User disconnected:", socket.id);
+
+        // If the mentor disconnects, remove the room
         if (room?.mentor === socket.id) {
-          // Mentor left the room
           io.in(codeBlockId).emit("mentorLeft");
-          codeBlockRooms.delete(codeBlockId);  // Delete the room when the mentor leaves
+          codeBlockRooms.delete(codeBlockId);  // Delete the room
         } else if (room?.students.includes(socket.id)) {
-          // Remove the student who left
+          // Remove the disconnected student from the student list
           room.students = room.students.filter((studentId) => studentId !== socket.id);
           io.in(codeBlockId).emit("studentCount", { studentCount: room.students.length });
         }
@@ -182,9 +193,11 @@ initApp().then((app) => {
     });
   });
 
+  // Start the server on the specified port
   const port = process.env.PORT || 3000;
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}`);
   });
 });
+
 
