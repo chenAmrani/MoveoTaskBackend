@@ -18,7 +18,7 @@ const initApp = (): Promise<Express> => {
     mongoose.connect(url!).then(() => {
       const app = express();
       // Middleware setup
-      app.use(cors({ origin: '*' }));
+      app.use(cors({ origin: 'https://moveo-task-frontend-six.vercel.app' }));
       app.use(bodyParser.json());
       app.use(bodyParser.urlencoded({ extended: true }));
       // Routes setup
