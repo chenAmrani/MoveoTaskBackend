@@ -10,6 +10,7 @@ const cors_1 = __importDefault(require("cors"));
 const mongoose_1 = __importDefault(require("mongoose"));
 const body_parser_1 = __importDefault(require("body-parser"));
 const codeBlock_Route_1 = __importDefault(require("./routes/codeBlock_Route"));
+require('dotenv').config();
 const initApp = () => {
     const promise = new Promise((resolve) => {
         const db = mongoose_1.default.connection;
