@@ -5,6 +5,8 @@ export interface ICodeBlock {
   blockTitle: string;
   blockCode: string;
   correctSolution: string;
+  mentor: string | null;
+  students: string[];
 }
 
 // Schema definition for the CodeBlock model
