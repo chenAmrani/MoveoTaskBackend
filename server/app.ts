@@ -24,10 +24,6 @@ const initApp = (): Promise<Express> => {
 
       app.use(bodyParser.json());
       app.use(bodyParser.urlencoded({ extended: true }));
-      // Routes setup
-      // app.get("/", (req, res) => {
-      //   res.send("Welcome to the CodeBlock API!");
-      // });
       app.use("/codeblocks", codeBlockRoutes);
       
       resolve(app);

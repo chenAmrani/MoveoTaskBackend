@@ -25,10 +25,6 @@ const initApp = () => {
             }));
             app.use(body_parser_1.default.json());
             app.use(body_parser_1.default.urlencoded({ extended: true }));
-            // Routes setup
-            // app.get("/", (req, res) => {
-            //   res.send("Welcome to the CodeBlock API!");
-            // });
             app.use("/codeblocks", codeBlock_Route_1.default);
             resolve(app);
         });

@@ -27,62 +27,53 @@ const codeBlock_1 = __importDefault(require("./models/codeBlock"));
         }
     });
     const codeBlockRooms = new Map();
-    io.on("connection", (socket) => {
-        console.log("User connected:", socket.id);
-        socket.on("joinCodeBlock", (codeBlockId) => __awaiter(void 0, void 0, void 0, function* () {
+    io.on('connection', (socket) => {
+        console.log('A user connected:', socket.id);
+        socket.on('joinCodeBlock', (codeBlockId) => {
             if (!codeBlockRooms.has(codeBlockId)) {
-                codeBlockRooms.set(codeBlockId, { mentor: null, students: [] });
+                codeBlockRooms.set(codeBlockId, []);
             }
-            const room = codeBlockRooms.get(codeBlockId);
-            const codeBlock = yield codeBlock_1.default.findById(codeBlockId);
-            const solution = codeBlock === null || codeBlock === void 0 ? void 0 : codeBlock.correctSolution;
-            let role;
-            if (!(room === null || room === void 0 ? void 0 : room.mentor)) {
-                role = "mentor";
-                room.mentor = socket.id;
-            }
-            else {
-                role = "student";
-                room.students.push(socket.id);
-            }
+            const codeBlockMembers = codeBlockRooms.get(codeBlockId) || [];
+            const role = codeBlockMembers.length === 0 ? 'mentor' : 'student';
+            console.log(`User ${socket.id} joining code block room: ${codeBlockId} as ${role}`);
+            console.log(`Code block members:`, codeBlockMembers.length);
+            codeBlockMembers.push(socket.id);
+            codeBlockRooms.set(codeBlockId, codeBlockMembers);
             socket.join(codeBlockId);
-            socket.emit("roleAssignment", { role });
-            io.in(codeBlockId).emit("studentCount", { studentCount: (room === null || room === void 0 ? void 0 : room.students.length) || 0 });
-            socket.on("codeChange", (_a) => __awaiter(void 0, [_a], void 0, function* ({ codeBlockId, newCode }) {
-                try {
-                    yield codeBlock_1.default.findByIdAndUpdate(codeBlockId, { code: newCode });
-                    socket.to(codeBlockId).emit("codeChange", newCode);
-                    if (newCode === solution) {
-                        io.in(codeBlockId).emit("showSmiley");
-                        console.log(`Solution matched for code block ${codeBlockId}, showing smiley.`);
-                    }
-                }
-                catch (err) {
-                    console.error(`Error updating code block ${codeBlockId}:`, err);
-                    socket.emit("error", "Failed to update code block");
-                }
-            }));
-            socket.on("mentorLeft", ({ codeBlockId }) => {
-                if ((room === null || room === void 0 ? void 0 : room.mentor) === socket.id) {
-                    room.mentor = null;
-                    io.in(codeBlockId).emit("mentorLeft");
-                    room.students = [];
-                }
-            });
-            socket.on("disconnect", () => {
-                console.log("User disconnected:", socket.id);
-                for (const [roomId, room] of codeBlockRooms.entries()) {
-                    if (room.mentor === socket.id) {
-                        io.in(roomId).emit("mentorLeft");
-                        codeBlockRooms.delete(roomId);
-                    }
-                    else if (room.students.includes(socket.id)) {
-                        room.students = room.students.filter((studentId) => studentId !== socket.id);
-                        io.in(roomId).emit("studentCount", { studentCount: room.students.length });
-                    }
-                }
-            });
+            socket.emit('roleAssignment', { role });
+            const studentCount = codeBlockMembers.length - 1;
+            io.to(codeBlockId).emit('studentCount', { studentCount });
+            console.log(`User ${socket.id} joined code block room: ${codeBlockId} as ${role}`);
+        });
+        socket.on('codeChange', (_a) => __awaiter(void 0, [_a], void 0, function* ({ codeBlockId, newCode }) {
+            try {
+                yield codeBlock_1.default.findByIdAndUpdate(codeBlockId, { code: newCode });
+                socket.to(codeBlockId).emit('codeUpdate', newCode);
+                console.log(`Broadcasting code change for code block: ${codeBlockId}`);
+            }
+            catch (err) {
+                console.error(`Error updating code block ${codeBlockId}:`, err);
+                socket.emit('error', 'Failed to update code block');
+            }
         }));
+        socket.on('disconnect', () => {
+            console.log('User disconnected:', socket.id);
+            for (const room of codeBlockRooms.keys()) {
+                const members = codeBlockRooms.get(room);
+                if (members === null || members === void 0 ? void 0 : members.includes(socket.id)) {
+                    const filteredMembers = members.filter(member => member !== socket.id);
+                    codeBlockRooms.set(room, filteredMembers);
+                    console.log(`User ${socket.id} removed from room: ${room}`);
+                    if (filteredMembers.length === 0) {
+                        codeBlockRooms.delete(room);
+                    }
+                    else {
+                        const studentCount = filteredMembers.length - 1;
+                        io.to(room).emit('studentCount', { studentCount });
+                    }
+                }
+            }
+        });
     });
     const port = process.env.PORT || 3000;
     server.listen(port, () => {
