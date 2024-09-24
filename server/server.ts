@@ -8,10 +8,10 @@ initApp().then((app) => {
   const server = http.createServer(app);
   const io = new Server(server, {
     cors: {
-      origin: "*", 
+      origin: "https://moveo-task-frontend-six.vercel.app",
       methods: ["GET", "POST"],
-      allowedHeaders: ["Content-Type"], 
-      credentials: true 
+      allowedHeaders: ["my-custom-header"],
+      credentials: true
     }
   });
 
