@@ -10,7 +10,7 @@ initApp().then((app) => {
     cors: {
       origin: "https://moveo-task-frontend-six.vercel.app",
       methods: ["GET", "POST"],
-      allowedHeaders: ["my-custom-header"],
+      allowedHeaders: ["Content-Type"],
       credentials: true
     }
   });
