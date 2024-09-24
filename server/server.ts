@@ -7,11 +7,12 @@ import CodeBlock from "./models/codeBlock";
 initApp().then((app) => {
   const server = http.createServer(app);
   const io = new Server(server, {
+    path: '/socket.io',
     cors: {
-      origin: "*", 
+      origin: "https://moveo-task-frontend-theta.vercel.app",  
       methods: ["GET", "POST"],
-      allowedHeaders: ["Content-Type"], 
-      credentials: true 
+      allowedHeaders: ["Content-Type"],
+      credentials: true
     }
   });
 
@@ -75,7 +76,7 @@ initApp().then((app) => {
   });
 
   const port = process.env.PORT || 3000;
-  server.listen(port, () => {
+  server.listen(port,() => {
     console.log(`Server running on http://localhost:${port}`);
   });
 });
