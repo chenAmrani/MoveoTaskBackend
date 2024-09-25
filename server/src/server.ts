@@ -1,6 +1,6 @@
 import initApp from "./app";
 import http from 'http';
-import { Server } from 'socket.io';
+import { Server,Socket } from 'socket.io';
 import CodeBlock from './models/codeBlock';
 
 
@@ -15,13 +15,14 @@ initApp().then((app) => {
     }
   });
 
-  const codeBlockRooms = new Map<string,string[]>();
+   const codeBlockRooms = new Map<string, string[]>();
 
-  
-  io.on('connection', (socket) => {
+  // Listen for new socket connections
+  io.on('connection', (socket: Socket) => {
     console.log('A user connected:', socket.id);
 
-    socket.on('joinCodeBlock', (codeBlockId) => {
+
+    socket.on('joinCodeBlock', (codeBlockId:string) => {
       if(!codeBlockRooms.has(codeBlockId)){
         codeBlockRooms.set(codeBlockId,[]);
       }
@@ -33,7 +34,7 @@ initApp().then((app) => {
       console.log(`User ${socket.id} joined code block room: ${codeBlockId} as ${role}`);
     });
 
-    socket.on('codeChange', async({ codeBlockId, newCode }) => {
+    socket.on('codeChange', async({ codeBlockId, newCode }: { codeBlockId: string, newCode: string }) => { 
       try{
         await CodeBlock.findByIdAndUpdate(codeBlockId, { code: newCode });
         socket.to(codeBlockId).emit('codeUpdate', newCode);
@@ -50,19 +51,14 @@ initApp().then((app) => {
         const members = codeBlockRooms.get(room);
         if (members?.includes(socket.id)) {
           const filteredMembers = members.filter((member)=> member !== socket.id);
-          codeBlockRooms.set(room, filteredMembers);
+          codeBlockRooms.set(room,filteredMembers);
           console.log(`User ${socket.id} removed from room: ${room}`);
-    
-          // Log the current number of members after update
-          console.log(`Remaining members in room: ${filteredMembers.length}`);
-    
-          if (filteredMembers.length === 0) {
+          if (members.length === 0) {
             codeBlockRooms.delete(room);
           }
         }
       }
     });
-    
   });
 
   server.listen(process.env.PORT, () => {
