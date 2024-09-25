@@ -19,8 +19,11 @@ const initApp = (): Promise<Express> => {
       const app = express();
       // Middleware setup
       const cors = require('cors');
-    app.use(cors({
-    origin: '*'}));
+      app.use(cors({
+        origin: "https://moveo-task-frontend-seven.vercel.app",  // Your frontend domain
+        methods: ["GET", "POST"],
+        credentials: true
+      }));
 
       app.use(bodyParser.json());
       app.use(bodyParser.urlencoded({ extended: true }));
