@@ -3,11 +3,11 @@
   "version": "1.0.0",
   "description": "A description of your project",
   "main": "dist/server.js",
- "scripts": {
-  "start": "node -r dotenv/config ./dist/server.js",
-  "build": "tsc && echo 'Build completed successfully'",
-  "dev": "ts-node-dev --respawn --transpile-only server.ts"
-},
+  "scripts": {
+    "start": "tsc && nodemon ./dist/src/server.js",
+    "build": "tsc",
+    "dev": "ts-node-dev server.ts"
+  },
 
   "engines": {
   "node": ">=18.0.0"
