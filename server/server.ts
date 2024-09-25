@@ -115,7 +115,7 @@ initApp().then((app) => {
   const io = new Server(server, {
     path: '/socket.io',
     cors: {
-      origin: "https://moveo-task-frontend-seven.vercel.app",  
+      origin: "https://moveo-task-frontend-sandy.vercel.app",  
       methods: ["GET", "POST"],
       allowedHeaders: ["Content-Type"],
       credentials: true,
