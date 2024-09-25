@@ -28,14 +28,36 @@ initApp().then((app) => {
       const role = codeBlockMembers?.length === 0 ? 'mentor' : 'student';
       
       if (role === 'mentor') {
-        mentors.set(codeBlockId, socket.id); // Save mentor
+        mentors.set(codeBlockId, socket.id); 
       }
     
       codeBlockMembers?.push(socket.id);
       socket.join(codeBlockId);
       socket.emit('roleAssignment', { role });
     
-      // Update student count
+      const studentCount = codeBlockMembers?.filter(id => id !== mentors.get(codeBlockId)).length || 0;
+      io.to(codeBlockId).emit('studentCountUpdate', { count: studentCount });
+    
+      console.log(`User ${socket.id} joined code block room: ${codeBlockId} as ${role}`);
+    });
+    
+    socket.on('joinCodeBlock', (codeBlockId: string) => {
+      if (!codeBlockRooms.has(codeBlockId)) {
+        codeBlockRooms.set(codeBlockId, []);
+      }
+      const codeBlockMembers = codeBlockRooms.get(codeBlockId);
+      
+      const role = codeBlockMembers?.length === 0 ? 'mentor' : 'student';
+      
+      if (role === 'mentor') {
+        mentors.set(codeBlockId, socket.id); 
+      }
+    
+      codeBlockMembers?.push(socket.id); 
+      socket.join(codeBlockId);
+      socket.emit('roleAssignment', { role });
+    
+      
       const studentCount = codeBlockMembers?.filter(id => id !== mentors.get(codeBlockId)).length || 0;
       io.to(codeBlockId).emit('studentCountUpdate', { count: studentCount });
     
@@ -54,9 +76,8 @@ initApp().then((app) => {
           if (socket.id === mentors.get(room)) {
             mentors.delete(room);
             io.to(room).emit('mentorLeft', { message: 'Mentor has left, moving students to LobbyPage' });
-            io.to(room).socketsLeave(room); // Disconnect students from room
+            io.to(room).socketsLeave(room); 
           } else {
-            // Update student count when a student disconnects
             const studentCount = filteredMembers.filter(id => id !== mentors.get(room)).length || 0;
             io.to(room).emit('studentCountUpdate', { count: studentCount });
           }
