@@ -5,7 +5,7 @@
   "main": "dist/server.js",
   
   "scripts": {
-  "start": "tsc && nodemon ./dist/src/server.js",
+  "start": "tsc && nodemon ./dist/server.js",
   "build": "tsc",
   "dev": "ts-node-dev server.ts"
 },
