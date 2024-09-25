@@ -6,7 +6,7 @@
   
   "scripts": {
   "start": "tsc && nodemon ./dist/src/server.js",
-  "build": "node -e \"if (process.platform !== 'win32') require('child_process').execSync('chmod +x ./node_modules/.bin/tsc');\" && tsc",
+  "build": "tsc",
   "dev": "ts-node-dev server.ts"
 },
 
