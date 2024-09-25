@@ -24,17 +24,20 @@ initApp().then((app) => {
       if (!codeBlockRooms.has(codeBlockId)) {
         codeBlockRooms.set(codeBlockId, []);
       }
-    
       const codeBlockMembers = codeBlockRooms.get(codeBlockId);
       const role = codeBlockMembers?.length === 0 ? 'mentor' : 'student';
+      
       if (role === 'mentor') {
-        mentors.set(codeBlockId, socket.id);
+        mentors.set(codeBlockId, socket.id); 
       }
+    
       codeBlockMembers?.push(socket.id);
       socket.join(codeBlockId);
       socket.emit('roleAssignment', { role });
+    
       const studentCount = codeBlockMembers?.filter(id => id !== mentors.get(codeBlockId)).length || 0;
       io.to(codeBlockId).emit('studentCountUpdate', { count: studentCount });
+    
       console.log(`User ${socket.id} joined code block room: ${codeBlockId} as ${role}`);
     });
     
