@@ -21,7 +21,7 @@ const initApp = () => {
             // Middleware setup
             const cors = require('cors');
             app.use(cors({
-                origin: "https://moveo-task-frontend-seven.vercel.app", // Your frontend domain
+                origin: "https://moveo-task-frontend-sandy.vercel.app", // Your frontend domain
                 methods: ["GET", "POST"],
                 credentials: true
             }));
