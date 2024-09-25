@@ -82,8 +82,8 @@ initApp().then((app) => {
     }
   });
 
-  const codeBlockRooms = new Map<string, string[]>(); // roomId -> array of socket ids
-  const mentors = new Map<string, string>(); // roomId -> mentor socket id
+  const codeBlockRooms = new Map<string, string[]>(); 
+  const mentors = new Map<string, string>(); 
 
   io.on('connection', (socket: Socket) => {
     console.log('A user connected:', socket.id);
@@ -96,14 +96,14 @@ initApp().then((app) => {
       const role = codeBlockMembers?.length === 0 ? 'mentor' : 'student';
       
       if (role === 'mentor') {
-        mentors.set(codeBlockId, socket.id); // Save mentor
+        mentors.set(codeBlockId, socket.id); 
       }
 
       codeBlockMembers?.push(socket.id);
       socket.join(codeBlockId);
       socket.emit('roleAssignment', { role });
 
-      // Notify room about number of students
+     
       const studentCount = codeBlockMembers?.filter(id => id !== mentors.get(codeBlockId)).length || 0;
       io.to(codeBlockId).emit('studentCountUpdate', { count: studentCount });
 
@@ -130,15 +130,14 @@ initApp().then((app) => {
           const filteredMembers = members.filter(member => member !== socket.id);
           codeBlockRooms.set(room, filteredMembers);
 
-          // If the disconnected user is the mentor
+      
           if (socket.id === mentors.get(room)) {
             mentors.delete(room);
-            // Move all students to LobbyPage
+         
             io.to(room).emit('mentorLeft', { message: 'Mentor has left, moving students to LobbyPage' });
-            io.to(room).socketsLeave(room); // Disconnect students from room
+            io.to(room).socketsLeave(room);
           }
 
-          // If no members left, delete room
           if (filteredMembers.length === 0) {
             codeBlockRooms.delete(room);
           }
