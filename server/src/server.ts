@@ -50,14 +50,19 @@ initApp().then((app) => {
         const members = codeBlockRooms.get(room);
         if (members?.includes(socket.id)) {
           const filteredMembers = members.filter((member)=> member !== socket.id);
-          codeBlockRooms.set(room,filteredMembers);
+          codeBlockRooms.set(room, filteredMembers);
           console.log(`User ${socket.id} removed from room: ${room}`);
-          if (members.length === 0) {
+    
+          // Log the current number of members after update
+          console.log(`Remaining members in room: ${filteredMembers.length}`);
+    
+          if (filteredMembers.length === 0) {
             codeBlockRooms.delete(room);
           }
         }
       }
     });
+    
   });
 
   server.listen(process.env.PORT, () => {
