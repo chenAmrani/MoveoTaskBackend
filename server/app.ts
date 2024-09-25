@@ -18,18 +18,10 @@ const initApp = (): Promise<Express> => {
     mongoose.connect(url!).then(() => {
       const app = express();
       // Middleware setup
-      const cors = require('cors');
-      app.use(cors({
-        origin: "https://moveo-task-frontend-sandy.vercel.app",  // Your frontend domain
-        methods: ["GET", "POST"],
-        allowedHeaders: ["Content-Type"],
-        credentials: true
-      }));
-
+      app.use(cors({ origin: '*' }));
       app.use(bodyParser.json());
       app.use(bodyParser.urlencoded({ extended: true }));
       app.use("/codeblocks", codeBlockRoutes);
-      
       resolve(app);
       });
       
