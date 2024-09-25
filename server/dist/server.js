@@ -104,30 +104,26 @@ const removeMemberFromRoom = (codeBlockId, memberId) => __awaiter(void 0, void 0
     const io = new socket_io_1.Server(server, {
         path: '/socket.io',
         cors: {
-            origin: "https://moveo-task-frontend-sandy.vercel.app",
+            origin: "*",
             methods: ["GET", "POST"],
             allowedHeaders: ["Content-Type"],
             credentials: true,
         },
     });
+    const codeBlockRooms = new Map();
     io.on('connection', (socket) => {
         console.log('A user connected:', socket.id);
-        socket.on('joinCodeBlock', (codeBlockId) => __awaiter(void 0, void 0, void 0, function* () {
-            let codeBlockMembers = yield getRoomMembers(codeBlockId);
-            // Assign role based on the number of members already in the room
-            const role = codeBlockMembers.length === 0 ? 'mentor' : 'student';
-            console.log(`User ${socket.id} joining code block room: ${codeBlockId} as ${role}`);
-            console.log(`Code block members count: ${codeBlockMembers.length}`);
-            // Add the new member to Redis
-            yield addMemberToRoom(codeBlockId, socket.id);
-            // Join the room and emit role assignment
+        socket.on('joinCodeBlock', (codeBlockId) => {
+            if (!codeBlockRooms.has(codeBlockId)) {
+                codeBlockRooms.set(codeBlockId, []);
+            }
+            const codeBlockMembers = codeBlockRooms.get(codeBlockId);
+            const role = (codeBlockMembers === null || codeBlockMembers === void 0 ? void 0 : codeBlockMembers.length) === 0 ? 'mentor' : 'student';
+            codeBlockMembers === null || codeBlockMembers === void 0 ? void 0 : codeBlockMembers.push(socket.id);
             socket.join(codeBlockId);
             socket.emit('roleAssignment', { role });
-            const studentCount = codeBlockMembers.length; // Count excludes the mentor
-            io.to(codeBlockId).emit('studentCount', { studentCount });
             console.log(`User ${socket.id} joined code block room: ${codeBlockId} as ${role}`);
-        }));
-        // Handle code change and broadcast it to the room
+        });
         socket.on('codeChange', (_a) => __awaiter(void 0, [_a], void 0, function* ({ codeBlockId, newCode }) {
             try {
                 yield codeBlock_1.default.findByIdAndUpdate(codeBlockId, { code: newCode });
@@ -139,29 +135,31 @@ const removeMemberFromRoom = (codeBlockId, memberId) => __awaiter(void 0, void 0
                 socket.emit('error', 'Failed to update code block');
             }
         }));
-        // Handle user disconnect
-        socket.on('disconnect', () => __awaiter(void 0, void 0, void 0, function* () {
+        socket.on('codeChange', (_a) => __awaiter(void 0, [_a], void 0, function* ({ codeBlockId, newCode }) {
+            try {
+                yield codeBlock_1.default.findByIdAndUpdate(codeBlockId, { code: newCode });
+                socket.to(codeBlockId).emit('codeUpdate', newCode);
+                console.log(`Broadcasting code change for code block: ${codeBlockId}`);
+            }
+            catch (err) {
+                console.error(`Error updating code block ${codeBlockId}:`, err);
+                socket.emit('error', 'Failed to update code block');
+            }
+        }));
+        socket.on('disconnect', () => {
             console.log('User disconnected:', socket.id);
-            // Check all rooms to see if the user was part of any room
-            for (const room of yield redisClient.keys('codeBlock:*')) {
-                const codeBlockId = room.split(':')[1];
-                const members = yield getRoomMembers(codeBlockId);
-                if (members.includes(socket.id)) {
-                    // Remove the member from the room in Redis
-                    yield removeMemberFromRoom(codeBlockId, socket.id);
-                    const remainingMembers = yield getRoomMembers(codeBlockId);
-                    console.log(`User ${socket.id} removed from room: ${codeBlockId}`);
-                    // If no members are left, delete the room
-                    if (remainingMembers.length === 0) {
-                        yield redisClient.del(`codeBlock:${codeBlockId}`);
-                    }
-                    else {
-                        const studentCount = remainingMembers.length - 1; // Exclude mentor
-                        io.to(codeBlockId).emit('studentCount', { studentCount });
+            for (const room of codeBlockRooms.keys()) {
+                const members = codeBlockRooms.get(room);
+                if (members === null || members === void 0 ? void 0 : members.includes(socket.id)) {
+                    const filteredMembers = members.filter((member) => member !== socket.id);
+                    codeBlockRooms.set(room, filteredMembers);
+                    console.log(`User ${socket.id} removed from room: ${room}`);
+                    if (members.length === 0) {
+                        codeBlockRooms.delete(room);
                     }
                 }
             }
-        }));
+        });
     });
     const port = process.env.PORT || 3000;
     server.listen(port, () => {
