@@ -135,7 +135,7 @@ const removeMemberFromRoom = (codeBlockId, memberId) => __awaiter(void 0, void 0
                 socket.emit('error', 'Failed to update code block');
             }
         }));
-        socket.on('codeChange', (_a) => __awaiter(void 0, [_a], void 0, function* ({ codeBlockId, newCode }) {
+        socket.on('codeChange', (_b) => __awaiter(void 0, [_b], void 0, function* ({ codeBlockId, newCode }) {
             try {
                 yield codeBlock_1.default.findByIdAndUpdate(codeBlockId, { code: newCode });
                 socket.to(codeBlockId).emit('codeUpdate', newCode);
