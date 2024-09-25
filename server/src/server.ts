@@ -56,12 +56,6 @@ initApp().then((app) => {
           // Log the current number of members after update
           console.log(`Remaining members in room: ${filteredMembers.length}`);
     
-          // If the mentor disconnects (first member is the mentor)
-          if (members[0] === socket.id && filteredMembers.length > 0) {
-            // Notify remaining members (students) that the mentor has left
-            io.to(room).emit('mentorLeft', { message: 'Mentor has left. Redirecting to LobbyPage.' });
-          }
-    
           if (filteredMembers.length === 0) {
             codeBlockRooms.delete(room);
           }
