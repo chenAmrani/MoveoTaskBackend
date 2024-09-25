@@ -22,6 +22,7 @@ const initApp = (): Promise<Express> => {
       app.use(cors({
         origin: "https://moveo-task-frontend-sandy.vercel.app",  // Your frontend domain
         methods: ["GET", "POST"],
+        allowedHeaders: ["Content-Type"],
         credentials: true
       }));
 

@@ -2,7 +2,7 @@
   "name": "moveo",
   "version": "1.0.0",
   "description": "A description of your project",
-  "main": "./dist/src/server.js",
+  "main": "dist/server.js",
   "scripts": {
     "start": "tsc && nodemon ./dist/server.js",
     "build": "tsc",
