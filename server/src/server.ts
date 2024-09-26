@@ -34,15 +34,23 @@ initApp().then((app) => {
     
       codeBlockMembers?.push(socket.id);
       socket.join(codeBlockId);
+    
       socket.emit('roleAssignment', { role });
     
-      // Updated student count calculation
       const mentorId = mentors.get(codeBlockId);
-      const studentCount = codeBlockMembers?.length ? codeBlockMembers.filter(id => id !== mentorId).length : 0;
+      
+      console.log(`Code Block Members for ${codeBlockId}:`, codeBlockMembers);
+      console.log(`Mentor ID for ${codeBlockId}: ${mentorId}`);
+    
+      const studentCount = codeBlockMembers?.filter(id => id !== mentorId).length || 0;
+    
+      console.log(`Calculated Student Count for ${codeBlockId}: ${studentCount}`);
+    
       io.to(codeBlockId).emit('studentCountUpdate', { count: studentCount });
     
       console.log(`User ${socket.id} joined code block room: ${codeBlockId} as ${role}`);
     });
+    
     
 
     socket.on('codeChange', async ({ codeBlockId, newCode }: { codeBlockId: string, newCode: string }) => {
